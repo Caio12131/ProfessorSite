@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { signInWithEmailAndPassword } from "firebase/auth"
 import { auth } from "@/app/api/firebase"
@@ -19,6 +19,8 @@ export default function LoginForm() {
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirect = searchParams?.get("redirect") || "/dashboard"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +30,7 @@ export default function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       await updateUserLastLogin(userCredential.user.uid)
-      router.push("/dashboard")
+      router.push(redirect)
     } catch (error) {
       setError("Falha no login. Verifique seu email e senha.")
       console.error(error)

@@ -11,8 +11,8 @@ const firebaseConfig = {
   storageBucket: "nutripass-defbb.firebasestorage.app",
   messagingSenderId: "435570448865",
   appId: "1:435570448865:web:3477dd404627a741785aa0",
-  measurementId: "G-9YKT3W9YH9"
-};
+  measurementId: "G-9YKT3W9YH9",
+}
 
 const app = initializeApp(firebaseConfig)
 

@@ -7,6 +7,10 @@
 /.next/
 /out/
 
+# Ignorar arquivo Firebase
+app/api/firebase.ts
+
+
 # production
 /build
 

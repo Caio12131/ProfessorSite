@@ -1,38 +1,54 @@
 "use client"
 
-import { Video, Target, Heart, Users, Award, TrendingUp, Globe, Shield } from "lucide-react"
+import { Video, Heart, Target, TrendingUp, Users, Award, Globe, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/auth-context"
 import { Card } from "@/components/ui/card"
 
 export default function SobrePage() {
+  const router = useRouter()
+  const { user } = useAuth()
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
+          <Link href="/home" className="flex items-center gap-2">
             <Video className="w-6 h-6 text-primary" />
             <span className="text-xl font-bold text-foreground">EduVideo</span>
-          </a>
+          </Link>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="/#cursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/home#cursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Cursos
-            </a>
-            <a href="/instrutores" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/instrutores" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Instrutores
-            </a>
-            <a href="/precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Preços
-            </a>
-            <a href="/sobre" className="text-sm text-foreground font-medium transition-colors">
+            </Link>
+            <Link href="/sobre" className="text-sm text-foreground font-medium transition-colors">
               Sobre
-            </a>
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Entrar
-            </Button>
-            <Button size="sm">Começar Agora</Button>
+            {user ? (
+              <Button size="sm" onClick={() => router.push("/dashboard")}>
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/login")}>
+                  Entrar
+                </Button>
+                <Button size="sm" onClick={() => router.push("/signup")}>
+                  Começar Agora
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -282,13 +298,19 @@ export default function SobrePage() {
               qualidade.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto text-base h-12 px-8">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="w-full sm:w-auto text-base h-12 px-8"
+                onClick={() => router.push("/signup")}
+              >
                 Começar Agora
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto text-base h-12 px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+                onClick={() => router.push("/home#cursos")}
               >
                 Conhecer Cursos
               </Button>
@@ -314,19 +336,19 @@ export default function SobrePage() {
               <h4 className="font-semibold text-foreground">Produto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="/#cursos" className="hover:text-foreground transition-colors">
+                  <Link href="/home#cursos" className="hover:text-foreground transition-colors">
                     Cursos
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/instrutores" className="hover:text-foreground transition-colors">
+                  <Link href="/instrutores" className="hover:text-foreground transition-colors">
                     Instrutores
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/precos" className="hover:text-foreground transition-colors">
+                  <Link href="/precos" className="hover:text-foreground transition-colors">
                     Preços
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -334,9 +356,9 @@ export default function SobrePage() {
               <h4 className="font-semibold text-foreground">Empresa</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="/sobre" className="hover:text-foreground transition-colors">
+                  <Link href="/sobre" className="hover:text-foreground transition-colors">
                     Sobre
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="#" className="hover:text-foreground transition-colors">

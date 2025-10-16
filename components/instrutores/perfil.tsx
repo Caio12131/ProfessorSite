@@ -4,8 +4,13 @@ import { Video, Linkedin, Twitter, Instagram, Globe, Award, BookOpen, Users } fr
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/context/auth-context"
 
 export default function InstrutoresPage() {
+  const router = useRouter()
+  const { user } = useAuth()
+
   const instructors = [
     {
       name: "João Silva",
@@ -82,50 +87,42 @@ export default function InstrutoresPage() {
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href="/home" className="flex items-center gap-2">
             <Video className="w-6 h-6 text-primary" />
             <span className="text-xl font-bold text-foreground">EduVideo</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6">
-            <a href="/#cursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/home#cursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Cursos
-            </a>
-            <a href="/instrutores" className="text-sm text-foreground font-medium">
+            </Link>
+            <Link href="/instrutores" className="text-sm text-foreground font-medium">
               Instrutores
-            </a>
-            <a href="/#precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Preços
-            </a>
-            <a href="/#sobre" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/sobre" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Sobre
-            </a>
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Entrar
-            </Button>
-            <Button size="sm">Começar Agora</Button>
+            {user ? (
+              <Button size="sm" onClick={() => router.push("/dashboard")}>
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/login")}>
+                  Entrar
+                </Button>
+                <Button size="sm" onClick={() => router.push("/signup")}>
+                  Começar Agora
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
-
-      {/* Hero Section */}
-      <section className="py-20 md:py-32 bg-gradient-to-b from-background to-muted/20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Award className="w-4 h-4" />
-              Instrutores Certificados e Premiados
-            </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-foreground leading-tight text-balance">
-              Aprenda com os melhores profissionais do mercado
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground text-pretty">
-              Nossos instrutores são especialistas reconhecidos, com anos de experiência prática e paixão por ensinar.
-            </p>
-          </div>
-        </div>
-      </section>
 
       {/* Instructors Grid */}
       <section className="py-20 md:py-32">
@@ -233,7 +230,9 @@ export default function InstrutoresPage() {
                   </div>
 
                   {/* CTA Button */}
-                  <Button className="w-full">Ver Cursos do Instrutor</Button>
+                  <Button className="w-full" onClick={() => router.push(user ? "/dashboard" : "/login")}>
+                    Ver Cursos do Instrutor
+                  </Button>
                 </div>
               </Card>
             ))}
@@ -252,10 +251,15 @@ export default function InstrutoresPage() {
               Compartilhe seu conhecimento com milhares de alunos e faça parte do nosso time de especialistas.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto text-base h-12 px-8">
+              <Button size="lg" className="w-full sm:w-auto text-base h-12 px-8" onClick={() => router.push("/login")}>
                 Candidate-se Agora
               </Button>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 px-8 bg-transparent">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto text-base h-12 px-8 bg-transparent"
+                onClick={() => router.push("/sobre")}
+              >
                 Saiba Mais
               </Button>
             </div>
@@ -280,24 +284,19 @@ export default function InstrutoresPage() {
               <h4 className="font-semibold text-foreground">Produto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="/#cursos" className="hover:text-foreground transition-colors">
+                  <Link href="/home#cursos" className="hover:text-foreground transition-colors">
                     Cursos
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/instrutores" className="hover:text-foreground transition-colors">
+                  <Link href="/instrutores" className="hover:text-foreground transition-colors">
                     Instrutores
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/#precos" className="hover:text-foreground transition-colors">
+                  <Link href="/precos" className="hover:text-foreground transition-colors">
                     Preços
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Empresas
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -305,18 +304,13 @@ export default function InstrutoresPage() {
               <h4 className="font-semibold text-foreground">Empresa</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <Link href="/sobre" className="hover:text-foreground transition-colors">
                     Sobre
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="#" className="hover:text-foreground transition-colors">
                     Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Carreiras
                   </a>
                 </li>
                 <li>
@@ -337,11 +331,6 @@ export default function InstrutoresPage() {
                 <li>
                   <a href="#" className="hover:text-foreground transition-colors">
                     Termos
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Cookies
                   </a>
                 </li>
               </ul>

@@ -3,36 +3,60 @@
 import { PlayCircle, Users, Award, TrendingUp, Star, CheckCircle, BookOpen, Video, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import Link from "next/link"
+import { useAuth } from "@/context/auth-context"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
+  const { user } = useAuth()
+  const router = useRouter()
+
+  const handleBuyClick = () => {
+    if (user) {
+      router.push("/comprar")
+    } else {
+      router.push("/login?redirect=/comprar")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link href="/home" className="flex items-center gap-2">
             <Video className="w-6 h-6 text-primary" />
             <span className="text-xl font-bold text-foreground">EduVideo</span>
-          </div>
+          </Link>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#cursos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Cursos
             </a>
-            <a href="/instrutores" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            <Link href="/instrutores" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Instrutores
-            </a>
-            <a href="/precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/precos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Preços
-            </a>
-            <a href="/sobre" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            </Link>
+            <Link href="/sobre" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Sobre
-            </a>
+            </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Entrar
-            </Button>
-            <Button size="sm">Começar Agora</Button>
+            {user ? (
+              <Button size="sm" onClick={() => router.push("/dashboard")}>
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => router.push("/login")}>
+                  Entrar
+                </Button>
+                <Button size="sm" onClick={() => router.push("/signup")}>
+                  Começar Agora
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -53,11 +77,20 @@ export default function Home() {
               Transforme sua carreira hoje.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" className="w-full sm:w-auto text-base h-12 px-8">
+              <Button
+                size="lg"
+                className="w-full sm:w-auto text-base h-12 px-8"
+                onClick={() => router.push(user ? "/dashboard" : "/signup")}
+              >
                 Explorar Cursos
                 <PlayCircle className="w-5 h-5 ml-2" />
               </Button>
-              <Button size="lg" variant="outline" className="w-full sm:w-auto text-base h-12 px-8 bg-transparent">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto text-base h-12 px-8 bg-transparent"
+                onClick={() => router.push("#cursos")}
+              >
                 Ver Demonstração
               </Button>
             </div>
@@ -167,7 +200,7 @@ export default function Home() {
       </section>
 
       {/* Popular Courses */}
-      <section className="py-20 md:py-32 bg-muted/30">
+      <section id="cursos" className="py-20 md:py-32 bg-muted/30">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center space-y-4 mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-foreground text-balance">Cursos mais populares</h2>
@@ -229,7 +262,9 @@ export default function Home() {
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-border">
                     <span className="text-2xl font-bold text-foreground">{course.price}</span>
-                    <Button size="sm">Ver Curso</Button>
+                    <Button size="sm" onClick={handleBuyClick}>
+                      Ver Curso
+                    </Button>
                   </div>
                 </div>
               </Card>
@@ -274,7 +309,7 @@ export default function Home() {
                   <span className="text-sm text-muted-foreground">Suporte por email</span>
                 </li>
               </ul>
-              <Button variant="outline" className="w-full bg-transparent">
+              <Button variant="outline" className="w-full bg-transparent" onClick={handleBuyClick}>
                 Começar Agora
               </Button>
             </Card>
@@ -309,7 +344,9 @@ export default function Home() {
                   <span className="text-sm text-muted-foreground">Acesso a comunidade exclusiva</span>
                 </li>
               </ul>
-              <Button className="w-full">Começar Agora</Button>
+              <Button className="w-full" onClick={handleBuyClick}>
+                Começar Agora
+              </Button>
             </Card>
 
             <Card className="p-8 space-y-6 border-border">
@@ -339,7 +376,7 @@ export default function Home() {
                   <span className="text-sm text-muted-foreground">Relatórios e analytics</span>
                 </li>
               </ul>
-              <Button variant="outline" className="w-full bg-transparent">
+              <Button variant="outline" className="w-full bg-transparent" onClick={() => router.push("/login")}>
                 Falar com Vendas
               </Button>
             </Card>
@@ -356,13 +393,19 @@ export default function Home() {
               Junte-se a milhares de alunos que já estão aprendendo e crescendo com nossa plataforma.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto text-base h-12 px-8">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="w-full sm:w-auto text-base h-12 px-8"
+                onClick={() => router.push("/signup")}
+              >
                 Começar Gratuitamente
               </Button>
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full sm:w-auto text-base h-12 px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 bg-transparent"
+                onClick={() => router.push("/login")}
               >
                 Falar com Especialista
               </Button>
@@ -388,24 +431,19 @@ export default function Home() {
               <h4 className="font-semibold text-foreground">Produto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
+                  <a href="#cursos" className="hover:text-foreground transition-colors">
                     Cursos
                   </a>
                 </li>
                 <li>
-                  <a href="/instrutores" className="hover:text-foreground transition-colors">
+                  <Link href="/instrutores" className="hover:text-foreground transition-colors">
                     Instrutores
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/precos" className="hover:text-foreground transition-colors">
+                  <Link href="/precos" className="hover:text-foreground transition-colors">
                     Preços
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Empresas
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -413,18 +451,13 @@ export default function Home() {
               <h4 className="font-semibold text-foreground">Empresa</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <a href="/sobre" className="hover:text-foreground transition-colors">
+                  <Link href="/sobre" className="hover:text-foreground transition-colors">
                     Sobre
-                  </a>
+                  </Link>
                 </li>
                 <li>
                   <a href="#" className="hover:text-foreground transition-colors">
                     Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Carreiras
                   </a>
                 </li>
                 <li>
@@ -445,11 +478,6 @@ export default function Home() {
                 <li>
                   <a href="#" className="hover:text-foreground transition-colors">
                     Termos
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-foreground transition-colors">
-                    Cookies
                   </a>
                 </li>
               </ul>
