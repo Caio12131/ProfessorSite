@@ -12,52 +12,74 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BookOpen, Clock, Award, TrendingUp, Users, GraduationCap, Video, DollarSign } from "lucide-react"
 import { useAuth } from "@/context/auth-context"
-import { MOCK_COURSES, getCourseProgress, getVideosByCourseId } from "@/lib/mock-data"
-
-const MOCK_STUDENTS = [
-  {
-    id: "2",
-    name: "João Silva",
-    email: "joao@example.com",
-    avatar: "/placeholder-user.jpg",
-    coursesEnrolled: 2,
-    averageProgress: 45,
-    lastActive: "Há 2 horas",
-    status: "active" as const,
-  },
-  {
-    id: "3",
-    name: "Maria Souza",
-    email: "maria@example.com",
-    avatar: "/placeholder-user.jpg",
-    coursesEnrolled: 3,
-    averageProgress: 78,
-    lastActive: "Há 1 dia",
-    status: "active" as const,
-  },
-  {
-    id: "4",
-    name: "Pedro Santos",
-    email: "pedro@example.com",
-    avatar: "/placeholder-user.jpg",
-    coursesEnrolled: 1,
-    averageProgress: 23,
-    lastActive: "Há 5 dias",
-    status: "inactive" as const,
-  },
-]
+import { getAllCourses } from "../api/course-database"
+import { getAllUsers } from "@/app/api/database"
+import { getCourseProgress, getVideosByCourseId } from "@/lib/mock-data"
 
 export default function DashboardPage() {
   const { user, isLoading } = useAuth()
   const router = useRouter()
-  const [enrolledCourses] = useState(MOCK_COURSES.slice(0, 2))
-  const [availableCourses] = useState(MOCK_COURSES)
+  const [courses, setCourses] = useState<any[]>([])
+  const [loadingCourses, setLoadingCourses] = useState(true)
+  const [enrolledCourses] = useState<any[]>([])
+  const [availableCourses, setAvailableCourses] = useState<any[]>([])
+  const [students, setStudents] = useState<any[]>([])
+  const [loadingStudents, setLoadingStudents] = useState(true)
 
   useEffect(() => {
     if (!isLoading && !user) {
       router.push("/login")
     }
   }, [user, isLoading, router])
+
+  useEffect(() => {
+    if (user) {
+      fetchCourses()
+      if (user.role === "instructor") {
+        fetchStudents()
+      }
+    }
+  }, [user])
+
+  const fetchCourses = async () => {
+    try {
+      setLoadingCourses(true)
+      const fetchedCourses = await getAllCourses()
+      setCourses(fetchedCourses)
+      setAvailableCourses(fetchedCourses)
+    } catch (error) {
+      console.error("Error fetching courses:", error)
+    } finally {
+      setLoadingCourses(false)
+    }
+  }
+
+  const fetchStudents = async () => {
+    try {
+      setLoadingStudents(true)
+      const allUsers = await getAllUsers()
+      const studentsList = allUsers.filter((u: any) => u.role === "student")
+      const formattedStudents = studentsList.map((student: any) => ({
+        id: student.id,
+        name: student.name || "Sem nome",
+        email: student.email,
+        avatar: student.avatar || "/placeholder-user.jpg",
+        coursesEnrolled: 0,
+        averageProgress: 0,
+        lastActive: "Recente",
+        status: "active" as const,
+      }))
+      setStudents(formattedStudents)
+    } catch (error) {
+      console.error("Error fetching students:", error)
+    } finally {
+      setLoadingStudents(false)
+    }
+  }
+
+  const handleCourseCreated = () => {
+    fetchCourses()
+  }
 
   if (isLoading || !user) {
     return null
@@ -70,7 +92,7 @@ export default function DashboardPage() {
   const averageProgress = totalCourses > 0 ? Math.round(totalProgress / totalCourses) : 0
 
   const totalLessons = enrolledCourses.reduce((acc, course) => {
-    return acc + course.lessons
+    return acc + (course.lessons || 0)
   }, 0)
 
   const completedLessons = enrolledCourses.reduce((acc, course) => {
@@ -80,14 +102,14 @@ export default function DashboardPage() {
   }, 0)
 
   const totalHours = enrolledCourses.reduce((acc, course) => {
-    const hours = Number.parseInt(course.duration)
+    const hours = Number.parseInt(course.duration) || 0
     return acc + hours
   }, 0)
 
-  const totalStudents = MOCK_STUDENTS.length
-  const activeStudents = MOCK_STUDENTS.filter((s) => s.status === "active").length
-  const totalRevenue = MOCK_COURSES.reduce((acc, course) => acc + course.price * course.students, 0)
-  const totalVideos = MOCK_COURSES.reduce((acc, course) => acc + course.lessons, 0)
+  const totalStudents = students.length
+  const activeStudents = students.filter((s) => s.status === "active").length
+  const totalRevenue = courses.reduce((acc, course) => acc + (course.price || 0) * (course.students || 0), 0)
+  const totalVideos = courses.reduce((acc, course) => acc + (course.lessons || 0), 0)
 
   return (
     <div className="min-h-screen bg-background">
@@ -142,27 +164,37 @@ export default function DashboardPage() {
                 <TabsContent value="enrolled" className="space-y-4">
                   <div>
                     <h2 className="text-2xl font-semibold mb-4">Continue Aprendendo</h2>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {enrolledCourses.map((course) => (
-                        <CourseCard
-                          key={course.id}
-                          course={course}
-                          progress={getCourseProgress(user.id, course.id)}
-                          enrolled
-                        />
-                      ))}
-                    </div>
+                    {enrolledCourses.length === 0 ? (
+                      <p className="text-muted-foreground">Você ainda não está matriculado em nenhum curso.</p>
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {enrolledCourses.map((course) => (
+                          <CourseCard
+                            key={course.id}
+                            course={course}
+                            progress={getCourseProgress(user.id, course.id)}
+                            enrolled
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
 
                 <TabsContent value="available" className="space-y-4">
                   <div>
                     <h2 className="text-2xl font-semibold mb-4">Cursos Disponíveis</h2>
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {availableCourses.map((course) => (
-                        <CourseCard key={course.id} course={course} />
-                      ))}
-                    </div>
+                    {loadingCourses ? (
+                      <p className="text-muted-foreground">Carregando cursos...</p>
+                    ) : availableCourses.length === 0 ? (
+                      <p className="text-muted-foreground">Nenhum curso disponível no momento.</p>
+                    ) : (
+                      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {availableCourses.map((course) => (
+                          <CourseCard key={course.id} course={course} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </TabsContent>
               </Tabs>
@@ -181,7 +213,7 @@ export default function DashboardPage() {
                 />
                 <StatsCard
                   title="Cursos Publicados"
-                  value={MOCK_COURSES.length}
+                  value={courses.length}
                   description="Cursos disponíveis"
                   icon={GraduationCap}
                 />
@@ -208,14 +240,18 @@ export default function DashboardPage() {
                       <h2 className="text-2xl font-semibold">Cursos</h2>
                       <p className="text-muted-foreground">Gerencie todos os cursos da plataforma</p>
                     </div>
-                    <AddCourseDialog />
+                    <AddCourseDialog onCourseCreated={handleCourseCreated} />
                   </div>
-                  <CourseTable
-                    courses={MOCK_COURSES}
-                    onEdit={(course) => console.log("[v0] Edit course:", course)}
-                    onDelete={(id) => console.log("[v0] Delete course:", id)}
-                    onView={(id) => router.push(`/course/${id}/video/1-1`)}
-                  />
+                  {loadingCourses ? (
+                    <p className="text-muted-foreground">Carregando cursos...</p>
+                  ) : (
+                    <CourseTable
+                      courses={courses}
+                      onEdit={(course) => console.log("[v0] Edit course:", course)}
+                      onDelete={(id) => console.log("[v0] Delete course:", id)}
+                      onView={(id) => router.push(`/course/${id}/video/1-1`)}
+                    />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="students" className="space-y-4">
@@ -223,7 +259,13 @@ export default function DashboardPage() {
                     <h2 className="text-2xl font-semibold mb-2">Progresso dos Alunos</h2>
                     <p className="text-muted-foreground mb-4">Acompanhe o desempenho de todos os alunos</p>
                   </div>
-                  <StudentProgressTable students={MOCK_STUDENTS} />
+                  {loadingStudents ? (
+                    <p className="text-muted-foreground">Carregando alunos...</p>
+                  ) : students.length === 0 ? (
+                    <p className="text-muted-foreground">Nenhum aluno cadastrado ainda.</p>
+                  ) : (
+                    <StudentProgressTable students={students} />
+                  )}
                 </TabsContent>
 
                 <TabsContent value="analytics" className="space-y-4">

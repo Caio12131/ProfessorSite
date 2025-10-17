@@ -6,8 +6,9 @@ import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { signInWithEmailAndPassword } from "firebase/auth"
-import { auth } from "@/app/api/firebase"
+import { auth, database } from "@/app/api/firebase"
 import { updateUserLastLogin } from "@/app/api/database"
+import { ref, get } from "firebase/database"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
@@ -20,7 +21,6 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirect = searchParams?.get("redirect") || "/dashboard"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,7 +30,26 @@ export default function LoginForm() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password)
       await updateUserLastLogin(userCredential.user.uid)
-      router.push(redirect)
+
+      const userRef = ref(database, `users/${userCredential.user.uid}`)
+      const snapshot = await get(userRef)
+
+      const isFirstInstructor = email === "caio.caca100@gmail.com"
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val()
+        const userRole = isFirstInstructor ? "instructor" : userData.role || "student"
+
+        // Redirect based on role
+        if (userRole === "instructor") {
+          router.push("/dashboard")
+        } else {
+          router.push("/dashboard/student")
+        }
+      } else {
+        // Default to student dashboard if no profile exists
+        router.push("/dashboard/student")
+      }
     } catch (error) {
       setError("Falha no login. Verifique seu email e senha.")
       console.error(error)

@@ -1,7 +1,14 @@
 import { ref, set, update, get } from "firebase/database"
-import { database } from "../api/firebase"
+import { database, auth } from "../api/firebase"
 import axios from "axios"
-import { deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth"
+import {
+  deleteUser,
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  createUserWithEmailAndPassword,
+  signOut,
+  signInWithEmailAndPassword,
+} from "firebase/auth"
 
 // Atualizar a interface UserProfile para incluir ticketusados
 interface UserProfile {
@@ -25,6 +32,7 @@ interface UserProfile {
   role?: "instructor" | "student" // Novo atributo para controle de papéis
   nutricionistaPersonalizado?: number // Novo atributo para controle de nutricionistas personalizados
   Bloqueado?: boolean // Novo atributo para controle de bloqueio
+  name?: string // Novo atributo para nome do usuário
 }
 
 export const deleteUsuario = async (user: any) => {
@@ -327,20 +335,85 @@ export const updateUserRole = async (userId: string, role: "instructor" | "stude
 
 export const getAllUsers = async () => {
   try {
+    console.log("[v0] Attempting to fetch all users from database")
+
     const usersRef = ref(database, "users")
     const snapshot = await get(usersRef)
 
     if (snapshot.exists()) {
       const usersData = snapshot.val()
-      return Object.keys(usersData).map((userId) => ({
+      const usersList = Object.keys(usersData).map((userId) => ({
         id: userId,
         ...usersData[userId],
       }))
+
+      console.log("[v0] Successfully retrieved users:", usersList.length)
+      return usersList
     } else {
+      console.log("[v0] No users found in database")
       return []
     }
   } catch (error) {
-    console.error("Error getting all users:", error)
+    console.error("[v0] Error getting all users:", error)
+    throw error
+  }
+}
+
+export const createInstructorAccount = async (
+  email: string,
+  password: string,
+  name: string,
+  phone: string,
+  currentUserEmail: string,
+  currentUserPassword: string,
+) => {
+  try {
+    console.log("[v0] Creating new instructor account:", email)
+
+    // Create the new instructor account
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+    const newUserId = userCredential.user.uid
+
+    console.log("[v0] New instructor account created with ID:", newUserId)
+
+    // Create the instructor profile in the database
+    await set(ref(database, `users/${newUserId}`), {
+      Tickets: 0,
+      Dieta: "",
+      Prompt: "",
+      TicketsUsados: 0,
+      Numero: phone,
+      email: email,
+      lastLogin: new Date().toISOString(),
+      role: "instructor",
+      nutricionistaPersonalizado: 0,
+      Bloqueado: false,
+      name: name,
+    })
+
+    console.log("[v0] Instructor profile created in database")
+
+    // Sign out the newly created instructor
+    await signOut(auth)
+
+    console.log("[v0] Signed out new instructor, re-authenticating current instructor")
+
+    // Re-authenticate the current instructor
+    await signInWithEmailAndPassword(auth, currentUserEmail, currentUserPassword)
+
+    console.log("[v0] Current instructor re-authenticated successfully")
+
+    return { success: true, userId: newUserId }
+  } catch (error: any) {
+    console.error("[v0] Error creating instructor account:", error)
+
+    // Try to re-authenticate the current instructor even if there was an error
+    try {
+      await signInWithEmailAndPassword(auth, currentUserEmail, currentUserPassword)
+    } catch (reAuthError) {
+      console.error("[v0] Failed to re-authenticate current instructor:", reAuthError)
+    }
+
     throw error
   }
 }

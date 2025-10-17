@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Users, UserCog, Search, Shield, GraduationCap } from "lucide-react"
-
+import { AddInstructorDialog } from "@/components/instructor/add-instructor-dialog"
 interface UserData {
   id: string
   email: string
@@ -37,11 +37,17 @@ export default function InstructorDashboard() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
+        console.log("[v0] Fetching all users as instructor:", user?.email)
+        console.log("[v0] Current user role:", user?.role)
+
         const allUsers = await getAllUsers()
+
+        console.log("[v0] Successfully fetched users:", allUsers.length)
         setUsers(allUsers)
         setFilteredUsers(allUsers)
       } catch (error) {
-        console.error("Error fetching users:", error)
+        console.error("[v0] Error fetching users:", error)
+        alert("Erro ao carregar usuários. Verifique as regras do Firebase e se você está logado como instrutor.")
       } finally {
         setLoadingUsers(false)
       }
@@ -73,6 +79,19 @@ export default function InstructorDashboard() {
     }
   }
 
+  const handleInstructorAdded = async () => {
+    setLoadingUsers(true)
+    try {
+      const allUsers = await getAllUsers()
+      setUsers(allUsers)
+      setFilteredUsers(allUsers)
+    } catch (error) {
+      console.error("Error refreshing users:", error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
+
   if (isLoading || loadingUsers) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
@@ -95,11 +114,16 @@ export default function InstructorDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Shield className="h-8 w-8 text-black" />
-            <h1 className="text-3xl font-bold text-gray-900">Painel do Instrutor</h1>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Shield className="h-8 w-8 text-black" />
+                <h1 className="text-3xl font-bold text-gray-900">Painel do Instrutor</h1>
+              </div>
+              <p className="text-gray-600">Gerencie usuários e promova instrutores</p>
+            </div>
+            <AddInstructorDialog onInstructorAdded={handleInstructorAdded} />
           </div>
-          <p className="text-gray-600">Gerencie usuários e promova instrutores</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

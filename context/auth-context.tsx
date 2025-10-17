@@ -3,13 +3,13 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
 import { onAuthStateChanged, signOut, type User as FirebaseUser } from "firebase/auth"
 import { auth, database } from "@/app/api/firebase"
-import { ref, get } from "firebase/database"
+import { ref, get, update } from "firebase/database"
 
 interface User {
   id: string
   name: string
   email: string
-  role: "instructor" | "student" | "instructor"
+  role: "instructor" | "student"
   avatar?: string
 }
 
@@ -36,9 +36,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const userRef = ref(database, `users/${firebaseUser.uid}`)
           const snapshot = await get(userRef)
 
+          const isFirstInstructor = firebaseUser.email === "caio.caca100@gmail.com"
+
+          console.log("[v0] User logged in:", firebaseUser.email)
+          console.log("[v0] Is first instructor:", isFirstInstructor)
+
           if (snapshot.exists()) {
             const userData = snapshot.val()
-            const isFirstInstructor = firebaseUser.email === "caio.caca100@gmail.com"
+            console.log("[v0] Current user role in database:", userData.role)
+
+            if (isFirstInstructor && userData.role !== "instructor") {
+              console.log("[v0] Updating role to instructor in database")
+              await update(userRef, { role: "instructor" })
+            }
+
             const userRole = isFirstInstructor ? "instructor" : userData.role || "student"
 
             setUser({
@@ -48,8 +59,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               role: userRole,
               avatar: firebaseUser.photoURL || undefined,
             })
+
+            console.log("[v0] User role set to:", userRole)
           } else {
-            const isFirstInstructor = firebaseUser.email === "caio.caca100@gmail.com"
+            console.log("[v0] User profile not found in database")
 
             setUser({
               id: firebaseUser.uid,
@@ -60,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             })
           }
         } catch (error) {
-          console.error("Error fetching user profile (check Firebase rules):", error)
+          console.error("[v0] Error fetching user profile:", error)
           const isFirstInstructor = firebaseUser.email === "caio.caca100@gmail.com"
 
           setUser({

@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from "clsx"
+import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
@@ -6,19 +6,20 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function phoneMask(value: string): string {
-  // Remove all non-digit characters
-  const digits = value.replace(/\D/g, "")
+  if (!value) return ""
 
-  // Apply the Brazilian phone mask (XX) XXXXX-XXXX
-  if (digits.length <= 2) {
-    return digits.length ? `(${digits}` : ""
-  } else if (digits.length <= 7) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`
-  } else if (digits.length <= 11) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`
+  // Remove all non-numeric characters
+  const numbers = value.replace(/\D/g, "")
+
+  // Apply Brazilian phone mask: (XX) XXXXX-XXXX or (XX) XXXX-XXXX
+  if (numbers.length <= 10) {
+    // Format: (XX) XXXX-XXXX
+    return numbers.replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d{4})(\d)/, "$1-$2")
   } else {
-    // Limit to 11 digits (2 for area code + 9 for the number)
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`
+    // Format: (XX) XXXXX-XXXX
+    return numbers
+      .replace(/^(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d)/, "$1-$2")
+      .slice(0, 15) // Limit to (XX) XXXXX-XXXX format
   }
 }
-

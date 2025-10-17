@@ -28,6 +28,26 @@ interface Comment {
   createdAt: string
 }
 
+// Interface para curso
+export interface CourseData {
+  id?: string
+  title: string
+  description: string
+  instructorId: string
+  instructorName: string
+  instructorEmail: string
+  thumbnail?: string
+  category: string
+  level: "Iniciante" | "Intermediário" | "Avançado"
+  duration: string
+  price: number
+  students: number
+  rating: number
+  createdAt: string
+  updatedAt: string
+  published: boolean
+}
+
 // Matricular usuário em um curso
 export const enrollUserInCourse = async (userId: string, courseId: string) => {
   try {
@@ -165,5 +185,92 @@ export const isUserEnrolledInCourse = async (userId: string, courseId: string) =
   } catch (error) {
     console.error("Error checking enrollment:", error)
     return false
+  }
+}
+
+// Criar um novo curso
+export const createCourse = async (courseData: Omit<CourseData, "id" | "createdAt" | "updatedAt">) => {
+  try {
+    const coursesRef = ref(database, "courses")
+    const newCourseRef = push(coursesRef)
+
+    const course: CourseData = {
+      ...courseData,
+      id: newCourseRef.key!,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      students: 0,
+      rating: 0,
+      published: true,
+    }
+
+    await set(newCourseRef, course)
+    return { success: true, courseId: newCourseRef.key }
+  } catch (error) {
+    console.error("Error creating course:", error)
+    throw error
+  }
+}
+
+// Obter todos os cursos
+export const getAllCourses = async () => {
+  try {
+    const coursesRef = ref(database, "courses")
+    const snapshot = await get(coursesRef)
+
+    if (snapshot.exists()) {
+      const coursesData = snapshot.val()
+      return Object.keys(coursesData).map((key) => ({
+        id: key,
+        ...coursesData[key],
+      }))
+    }
+    return []
+  } catch (error) {
+    console.error("Error getting courses:", error)
+    throw error
+  }
+}
+
+// Obter curso por ID
+export const getCourseById = async (courseId: string) => {
+  try {
+    const courseRef = ref(database, `courses/${courseId}`)
+    const snapshot = await get(courseRef)
+
+    if (snapshot.exists()) {
+      return { id: courseId, ...snapshot.val() }
+    }
+    return null
+  } catch (error) {
+    console.error("Error getting course:", error)
+    throw error
+  }
+}
+
+// Atualizar curso
+export const updateCourse = async (courseId: string, updates: Partial<CourseData>) => {
+  try {
+    const courseRef = ref(database, `courses/${courseId}`)
+    await update(courseRef, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    })
+    return true
+  } catch (error) {
+    console.error("Error updating course:", error)
+    throw error
+  }
+}
+
+// Deletar curso
+export const deleteCourse = async (courseId: string) => {
+  try {
+    const courseRef = ref(database, `courses/${courseId}`)
+    await set(courseRef, null)
+    return true
+  } catch (error) {
+    console.error("Error deleting course:", error)
+    throw error
   }
 }
