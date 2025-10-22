@@ -6,6 +6,7 @@ import { auth, database } from "@/app/api/firebase"
 import { ref, get, update } from "firebase/database"
 
 interface User {
+  uid(uid: any): unknown
   id: string
   name: string
   email: string
